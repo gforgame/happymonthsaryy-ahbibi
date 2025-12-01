@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book - Happy Monthsary</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #f5e6d3 0%, #e8dcc8 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      overflow: hidden;
+    }
+
+    .book-container {
+      width: 95%;
+      max-width: 1200px;
+      height: 90vh;
+      display: flex;
+      gap: 10px;
+      perspective: 1200px;
+    }
+
+    .page {
+      flex: 1;
+      background: linear-gradient(to right, #f9f5f0 0%, #fdfbf7 100%);
+      border: 2px solid #8b7355;
+      border-radius: 2px;
+      padding: 60px 50px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2), inset -1px 0 5px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    /* single-page layout: no left/right specific borders */
+
+    /* Horizontal divider line */
+    .divider-line {
+      position: absolute;
+      width: 90%;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #333, transparent);
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Page number styling */
+    .page-number {
+      position: absolute;
+      bottom: 30px;
+      font-size: 18px;
+      color: #666;
+      font-family: Georgia, serif;
+    }
+
+    .page-number {
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
+    /* Navigation arrows */
+    .nav-arrows {
+      position: absolute;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 40px;
+      font-size: 28px;
+      cursor: pointer;
+      color: #999;
+      transition: color 0.3s;
+    }
+
+    .nav-arrows span:hover {
+      color: #333;
+    }
+
+    .nav-arrows span {
+      user-select: none;
+    }
+
+    /* Center flower image */
+    .center-flower {
+      width: 200px;
+      height: 200px;
+      object-fit: contain;
+      margin-bottom: 40px;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+    }
+
+    /* Message container */
+    .message-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 200px;
+      text-align: center;
+    }
+
+    /* Message text with animation */
+    .message {
+      font-size: 24px;
+      color: #333;
+      line-height: 1.6;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      max-width: 90%;
+      word-wrap: break-word;
+      white-space: normal;
+      word-break: break-word;
+    }
+
+    /* Each letter animation */
+    .message span {
+      display: inline-block;
+      animation: jumpIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      animation-fill-mode: both;
+    }
+
+    /* Page flip animations */
+    /* page fold (realistic soft paper flip) */
+    .page {
+      position: relative;
+      transform-style: preserve-3d;
+      backface-visibility: hidden;
+      overflow: visible;
+    }
+
+    .page-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      transform-origin: center;
+      backface-visibility: hidden;
+    }
+
+    /* animate the inner page rotation to mimic the paper turning */
+    .page-inner.flip-next {
+      animation: innerFlipNext 720ms cubic-bezier(.2,.9,.3,1) forwards;
+    }
+
+    .page-inner.flip-prev {
+      animation: innerFlipPrev 720ms cubic-bezier(.2,.9,.3,1) forwards;
+    }
+
+    @keyframes innerFlipNext {
+      0% {
+        transform-origin: left center;
+        transform: rotateY(0deg) translateZ(0);
+      }
+      40% {
+        transform-origin: left center;
+        transform: rotateY(-95deg) translateZ(-6px) scaleX(0.99);
+      }
+      50% {
+        transform-origin: left center;
+        transform: rotateY(-100deg) translateZ(-8px) scaleX(0.98);
+      }
+      100% {
+        transform-origin: left center;
+        transform: rotateY(0deg) translateZ(0);
+      }
+    }
+
+    @keyframes innerFlipPrev {
+      0% {
+        transform-origin: right center;
+        transform: rotateY(0deg) translateZ(0);
+      }
+      40% {
+        transform-origin: right center;
+        transform: rotateY(95deg) translateZ(-6px) scaleX(0.99);
+      }
+      50% {
+        transform-origin: right center;
+        transform: rotateY(100deg) translateZ(-8px) scaleX(0.98);
+      }
+      100% {
+        transform-origin: right center;
+        transform: rotateY(0deg) translateZ(0);
+      }
+    }
+
+    /* The folding surface that animates across the page */
+    .page-fold {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      transform-origin: left center;
+      transform: translateX(0) rotateY(0deg);
+      backface-visibility: hidden;
+      opacity: 0;
+      will-change: transform, opacity, box-shadow;
+      /* subtle paper texture-like gradient */
+      background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(0,0,0,0.02) 50%, rgba(255,255,255,0.02) 100%);
+      box-shadow: none;
+      transition: opacity 220ms linear;
+    }
+
+    /* fold shadow that sits under the fold */
+    .page-fold::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, rgba(0,0,0,0.0) 0%, rgba(0,0,0,0.18) 50%, rgba(0,0,0,0.0) 100%);
+      opacity: 0.0;
+      transition: opacity 220ms linear;
+    }
+
+    .page-fold.flip-next {
+      animation: foldNext 720ms cubic-bezier(.2,.9,.3,1) forwards;
+      opacity: 1;
+    }
+
+    .page-fold.flip-prev {
+      transform-origin: right center;
+      animation: foldPrev 720ms cubic-bezier(.2,.9,.3,1) forwards;
+      opacity: 1;
+    }
+
+    @keyframes foldNext {
+      0% {
+        transform-origin: left center;
+        transform: translateX(0) rotateY(0deg) skewY(0deg);
+        box-shadow: none;
+      }
+      30% {
+        transform: translateX(18%) rotateY(-20deg) skewY(-1deg);
+        box-shadow: -6px 14px 30px rgba(0,0,0,0.25);
+        opacity: 1;
+      }
+      55% {
+        transform: translateX(55%) rotateY(-100deg) skewY(-3deg) scaleX(0.98);
+        box-shadow: -20px 28px 60px rgba(0,0,0,0.28);
+      }
+      85% {
+        transform: translateX(18%) rotateY(-10deg) skewY(-0.8deg) scaleX(0.995);
+        box-shadow: -8px 18px 36px rgba(0,0,0,0.18);
+      }
+      100% {
+        transform: translateX(0) rotateY(0deg) skewY(0deg);
+        box-shadow: none;
+        opacity: 0;
+      }
+    }
+
+    @keyframes foldPrev {
+      0% {
+        transform-origin: right center;
+        transform: translateX(0) rotateY(0deg) skewY(0deg);
+        box-shadow: none;
+      }
+      30% {
+        transform: translateX(-18%) rotateY(20deg) skewY(1deg);
+        box-shadow: 6px 14px 30px rgba(0,0,0,0.25);
+        opacity: 1;
+      }
+      55% {
+        transform: translateX(-55%) rotateY(100deg) skewY(3deg) scaleX(0.98);
+        box-shadow: 20px 28px 60px rgba(0,0,0,0.28);
+      }
+      85% {
+        transform: translateX(-18%) rotateY(10deg) skewY(0.8deg) scaleX(0.995);
+        box-shadow: 8px 18px 36px rgba(0,0,0,0.18);
+      }
+      100% {
+        transform: translateX(0) rotateY(0deg) skewY(0deg);
+        box-shadow: none;
+        opacity: 0;
+      }
+    }
+
+    @keyframes jumpIn {
+      0% {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      50% {
+        opacity: 1;
+        transform: translateY(-8px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Stagger effect for each letter */
+    .message span:nth-child(1) { animation-delay: 0s; }
+    .message span:nth-child(2) { animation-delay: 0.05s; }
+    .message span:nth-child(3) { animation-delay: 0.1s; }
+    .message span:nth-child(4) { animation-delay: 0.15s; }
+    .message span:nth-child(5) { animation-delay: 0.2s; }
+    .message span:nth-child(6) { animation-delay: 0.25s; }
+    .message span:nth-child(7) { animation-delay: 0.3s; }
+    .message span:nth-child(8) { animation-delay: 0.35s; }
+    .message span:nth-child(9) { animation-delay: 0.4s; }
+    .message span:nth-child(10) { animation-delay: 0.45s; }
+    .message span:nth-child(11) { animation-delay: 0.5s; }
+    .message span:nth-child(12) { animation-delay: 0.55s; }
+    .message span:nth-child(13) { animation-delay: 0.6s; }
+    .message span:nth-child(14) { animation-delay: 0.65s; }
+    .message span:nth-child(15) { animation-delay: 0.7s; }
+    .message span:nth-child(16) { animation-delay: 0.75s; }
+    .message span:nth-child(17) { animation-delay: 0.8s; }
+    .message span:nth-child(18) { animation-delay: 0.85s; }
+    .message span:nth-child(19) { animation-delay: 0.9s; }
+    .message span:nth-child(20) { animation-delay: 0.95s; }
+    .message span:nth-child(21) { animation-delay: 1s; }
+    .message span:nth-child(22) { animation-delay: 1.05s; }
+    .message span:nth-child(23) { animation-delay: 1.1s; }
+    .message span:nth-child(24) { animation-delay: 1.15s; }
+    .message span:nth-child(25) { animation-delay: 1.2s; }
+    .message span:nth-child(26) { animation-delay: 1.25s; }
+    .message span:nth-child(27) { animation-delay: 1.3s; }
+    .message span:nth-child(28) { animation-delay: 1.35s; }
+    .message span:nth-child(29) { animation-delay: 1.4s; }
+    .message span:nth-child(30) { animation-delay: 1.45s; }
+    .message span:nth-child(31) { animation-delay: 1.5s; }
+    .message span:nth-child(32) { animation-delay: 1.55s; }
+    .message span:nth-child(33) { animation-delay: 1.6s; }
+    .message span:nth-child(34) { animation-delay: 1.65s; }
+    .message span:nth-child(35) { animation-delay: 1.7s; }
+    .message span:nth-child(36) { animation-delay: 1.75s; }
+    .message span:nth-child(37) { animation-delay: 1.8s; }
+    .message span:nth-child(38) { animation-delay: 1.85s; }
+    .message span:nth-child(39) { animation-delay: 1.9s; }
+    .message span:nth-child(40) { animation-delay: 1.95s; }
+    .message span:nth-child(n+41) { animation-delay: 2s; }
+
+    /* Disable arrow styling */
+    .nav-arrows span.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .nav-arrows span.disabled:hover {
+      color: #999;
+    }
+
+    /* Right side flower decoration */
+    .right-side-flower {
+      position: absolute;
+      right: 20px;
+      bottom: 120px;
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      opacity: 0.7;
+    }
+
+    /* Left side flower decoration */
+    .left-side-flower {
+      position: absolute;
+      left: 20px;
+      bottom: 120px;
+      width: 100px;
+      height: 100px;
+      object-fit: contain;
+      opacity: 0.7;
+    }
+
+    /* Thanks flowers GIF on the right side */
+    .thanks-flowers {
+      position: absolute;
+      right: 18px;
+      top: 110px;
+      width: 120px;
+      height: auto;
+      object-fit: contain;
+      opacity: 0.95;
+      pointer-events: none;
+      z-index: 6;
+      transform: translateZ(0);
+    }
+  </style>
+</head>
+<body>
+  <div class="book-container">
+    <!-- Single Page View -->
+    <div class="page single-page" id="page">
+      <div class="page-inner">
+        <img class="center-flower" src="centerFlower.gif" alt="center flower">
+        <img class="thanks-flowers" src="ThanksFlowersGIF.gif" alt="thanks flowers">
+        <div class="message-container">
+          <div class="message" id="message"></div>
+        </div>
+        <div class="divider-line"></div>
+        <div class="page-number" id="pageNum">1</div>
+        <div class="nav-arrows">
+          <span id="prevBtn">❮</span>
+          <span id="nextBtn">❯</span>
+        </div>
+      </div>
+      <div class="page-fold" id="pageFold" aria-hidden="true"></div>
+    </div>
+  </div>
+
+  <script>
+    // Hard-coded messages for each page
+    const pageMessages = [
+      "happy monthsary my loveeee😚💋💗 happy happy our day babyyy🥹💗 i just wanna say na i'm soooo grateful for you everyday, every moment, every little thing nga ginahatag mo sa akoa🥹🫂💗 thank you sa imong care, imong love, imong patience, imong understanding, tanan tanan nga warmth nimo nga ginapafeel mo sa akoa always🥹🫂💗",
+      "my love, ikaw gid akon kalipay, akon comfort, akon home, akon everythinggg🥹💗 ikaw akong kusog, akong peace, akong joy, tanan tanan nga makapahappy sa akoa kay naa nimo tanan🥰💗 so perfect ka baby, so precioussssssss🥹💗 everytime i think of you mura ko mag melt kay sobra ka perfect sa akong heart😚💗",
+      "you make my world brighter and my heart fuller thank you for being you",
+      "looking forward to many more months and yearsss never ending yearsss and memories together with you",
+      "i’m so proud of you alwaysssss🥹🫂💗 proud sa imo heart, sa imo kindness, sa imo strength, sa imo pagka soft, sa imo pagka lovingggggg🥹💗 amazing kaayuuuu ikaw gid the best para sa akoa always babyyy💗🫂",
+      "i am so grateful to have you in my life you mean everything to me",
+      "thank you my lovelove sa pag choose simo everyday, sa pag love sa akoa, sa pag hold simo sa akon heart nga gentle kaayo🥹🫂💗 grateful ko forever nga ikaw akong future ug foreverrrr😚💗🫂",
+      "i love you kaayo babyyy with all of me😚💗🫂 us forever, always, diri lang ko simo, forever ko nimo babyyy😚💗🫂 happy monthsary my precious loveloveee🥹💗💗💗here's to us and the beautiful journey we're on together happy monthsary!!😚💗🫂",
+       
+    ];
+
+    let currentPage = 0;
+    const totalPages = pageMessages.length;
+
+    // Convert message to animated spans but keep spaces as text nodes so words can wrap
+    function createAnimatedMessage(text) {
+      const container = document.createElement('div');
+      const chars = Array.from(text); // handle unicode characters safely
+      chars.forEach(char => {
+        if (char === ' ') {
+          container.appendChild(document.createTextNode(' '));
+        } else {
+          const span = document.createElement('span');
+          span.textContent = char;
+          container.appendChild(span);
+        }
+      });
+      return container;
+    }
+
+    // Render the current page message into the single page element
+    function renderPageContent(index) {
+      const messageEl = document.getElementById('message');
+      messageEl.innerHTML = '';
+      messageEl.appendChild(createAnimatedMessage(pageMessages[index] || ''));
+      document.getElementById('pageNum').textContent = (index + 1).toString();
+    }
+
+    // Update button disabled states
+    function updateButtons() {
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      if (currentPage === 0) prevBtn.classList.add('disabled'); else prevBtn.classList.remove('disabled');
+      if (currentPage >= totalPages - 1) nextBtn.classList.add('disabled'); else nextBtn.classList.remove('disabled');
+    }
+
+    // Do a soft, paper-like fold using the .page-fold element and swap content mid-fold
+    function doFlip(newIndex, direction) {
+      const fold = document.getElementById('pageFold');
+      const ANIM_MS = 720; // matches CSS keyframes duration
+      // clear previous classes
+      fold.classList.remove('flip-next', 'flip-prev');
+      const pageInner = document.querySelector('.page-inner');
+      pageInner.classList.remove('flip-next', 'flip-prev');
+      void fold.offsetWidth; // reflow
+      // trigger fold animation + inner rotation
+      fold.classList.add(direction === 'next' ? 'flip-next' : 'flip-prev');
+      pageInner.classList.add(direction === 'next' ? 'flip-next' : 'flip-prev');
+
+      // swap content around the moment the page is mostly folded (midpoint)
+      setTimeout(() => {
+        currentPage = newIndex;
+        renderPageContent(currentPage);
+        updateButtons();
+        // restart letter animations by forcing reflow on message
+        const msg = document.getElementById('message');
+        void msg.offsetWidth;
+      }, ANIM_MS * 0.48);
+
+      // cleanup classes after animation
+      setTimeout(() => {
+        fold.classList.remove('flip-next', 'flip-prev');
+        pageInner.classList.remove('flip-next', 'flip-prev');
+      }, ANIM_MS + 60);
+    }
+
+    // Navigation handlers
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentPage > 0) {
+        doFlip(currentPage - 1, 'prev');
+      }
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      if (currentPage < totalPages - 1) {
+        doFlip(currentPage + 1, 'next');
+      }
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowLeft') document.getElementById('prevBtn').click();
+      if (e.key === 'ArrowRight') document.getElementById('nextBtn').click();
+    });
+
+    // Initialize
+    renderPageContent(currentPage);
+    updateButtons();
+  </script>
+</body>
+</html>
